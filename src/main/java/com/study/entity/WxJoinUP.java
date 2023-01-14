@@ -4,6 +4,10 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * 本来打算封装wx接入的请求，但是@RequestBody 失败，猜测应该是参数太多，对应不上实体，因此暂时作废
+ * version 1.0
+ */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

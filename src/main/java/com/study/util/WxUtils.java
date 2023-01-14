@@ -1,5 +1,8 @@
 package com.study.util;
 
+import com.alibaba.fastjson.JSONObject;
+import com.study.entity.*;
+import com.thoughtworks.xstream.XStream;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
@@ -7,14 +10,17 @@ import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class WxUtils {
 
     public static final String TOKEN = "xuy";//在微信配置界面自定义的token
+    private static AccessToken at;//token获取的次数有限,有效期也有限,所以需要保存起来
+    private static String GET_TOKEN_URL = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=APPID&secret=APPSECRET";
+
+    //登录测试号管理界面-测试号信息下面可以得到你的APPID和APPSECRET
+    private static String APPID = "wx25e837e3d3da7ba3";
+    private static String APPSECRET = "358f923ac831b4498d76744ae073c565";
 
     /**
      * 接入校验
@@ -62,5 +68,95 @@ public class WxUtils {
             map.put(element.getName(), element.getStringValue());
         }
         return map;
+    }
+
+    /**
+     * 事件消息回复
+     * @param requestMap
+     * @return java.lang.String
+     * @author xuy
+     * @date 2023/1/14 17:12
+     */
+    public static String getResponse(Map<String, String> requestMap) {
+        BaseMsg msg = null;
+        // 根据用户发送消息的类型,做不同的处理
+        String msgType = requestMap.get("MsgType");
+        switch (msgType) {
+            case "text":
+                msg = dealTextMsg(requestMap);
+                break;
+            case "news":
+                break;
+            default:
+                break;
+        }
+        // System.out.println(msg);
+        // 将处理结果转化成xml的字符串返回
+        if (null != msg) {
+            return beanToXml(msg);
+        }
+        return null;
+    }
+
+    /**
+     * 将回复的消息类转成xml字符串
+     * @param msg
+     * @return java.lang.String
+     * @author xuy
+     * @date 2023/1/14 17:11
+     */
+    public static String beanToXml(BaseMsg msg) {
+        XStream stream = new XStream();
+        stream.processAnnotations(TextMsg.class);
+        stream.processAnnotations(NewsMsg.class);
+        String xml = stream.toXML(msg);
+        return xml;
+    }
+    /**
+     * 当用户发送是文本消息的处理逻辑
+     * @param requestMap
+     * @return com.study.entity.BaseMsg
+     * @author xuy
+     * @date 2023/1/14 17:11
+     */
+    private static BaseMsg dealTextMsg(Map<String, String> requestMap) {
+        // 获取用户发送的消息内容
+        String msg = requestMap.get("Content");
+        // 如果是图文回复一个图文消息
+        if (msg.equals("图文")) {
+            List<Article> articles = new ArrayList<Article>();
+            articles.add(new Article("码云博客", "这个是我个人的码云博客,基于hexo搭建,里面的文章都是使用markdown编写",
+                    "https://heliufang.gitee.io/uploads/banner.jpg", "https://heliufang.gitee.io/"));
+            return new NewsMsg(requestMap, articles);
+        }
+        //否则回复一个文本消息,文本内容为'当前时间+你好'
+        //当然这个内容可以自定义,在这里也可以接入自动回复机器人
+        TextMsg textMsg = new TextMsg(requestMap, new Date(System.currentTimeMillis()).toLocaleString() + "你好");
+        return textMsg;
+    }
+
+
+    /**
+     * 发送get请求获取AccessToken
+     */
+    private static void getToken() {
+        String url = GET_TOKEN_URL.replace("APPID", APPID).replace("APPSECRET", APPSECRET);
+        String tokenStr = HttpUtils.sendGet(url);//调用工具类发get请求
+        System.out.println(tokenStr);
+        JSONObject jsonObject = JSONObject.parseObject(tokenStr);
+        String token = jsonObject.getString("access_token");
+        String expiresIn = jsonObject.getString("expires_in");
+        at = new AccessToken(token, expiresIn);
+    }
+
+    /**
+     * 获取AccessToken  向外提供
+     */
+    public static String getAccessToken() {
+        //过期了或者没有值再去发送请求获取
+        if(at == null || at.isExpire()) {
+            getToken();
+        }
+        return at.getToken();
     }
 }

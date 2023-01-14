@@ -14,10 +14,10 @@ public class WxServiceImpl implements WxService {
     @Override
     public void joinUp(HttpServletRequest req,HttpServletResponse resp) {
         //取出微信服务器传过来的参数
-        String signature = req.getParameter("signature");
-        String timestamp = req.getParameter("timestamp");
-        String nonce = req.getParameter("nonce");
-        String echostr = req.getParameter("echostr");
+        String signature = req.getParameter("signature");//微信加密签名，signature结合了开发者填写的token参数和请求中的timestamp参数、nonce参数
+        String timestamp = req.getParameter("timestamp");//时间戳
+        String nonce = req.getParameter("nonce");//随机数
+        String echostr = req.getParameter("echostr");//随机字符串
         //自定义一个check方法用来校验接入
         boolean success = WxUtils.check(timestamp, nonce, signature);
         if(success){
