@@ -19,8 +19,8 @@ public class WxUtils {
     private static String GET_TOKEN_URL = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=APPID&secret=APPSECRET";
 
     //登录测试号管理界面-测试号信息下面可以得到你的APPID和APPSECRET
-    private static String APPID = "wx25e837e3d3da7ba3";
-    private static String APPSECRET = "358f923ac831b4498d76744ae073c565";
+    private static String APPID = "wxf9322665468f1b86";
+    private static String APPSECRET = "bcac3e66536177e5d4b1bfc532733d63";
 
     /**
      * 接入校验
